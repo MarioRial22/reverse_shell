@@ -13,24 +13,31 @@ LISTEN_ADDR = '0.0.0.0'
 LISTEN_PORT = 9999
 
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
 def main():
-    sock = None
 
     try:
         sock = socket.socket()  # actual conversation between server and client
     except socket.error as msg:
-        print("Error creating socket: " + str(msg))
+        eprint("Error creating socket: " + str(msg))
+
+        raise msg
 
     try:
-        print("Binding socket to port: " + str(LISTEN_PORT))
+        eprint("Binding socket to port: " + str(LISTEN_PORT))
+
         sock.bind((LISTEN_ADDR, LISTEN_PORT))
         sock.listen(5)
     except socket.error as msg:
-        print("Error binding socket to port: " + str(msg))
+        eprint("Error binding socket to port: " + str(msg))
+
+        raise msg
 
     conn, address = sock.accept()
-
-    print("Connection has been established | " + "IP " + address[0] + " | Port " + str(address[1]))
+    eprint("Connection has been established | " + "IP " + address[0] + " | Port " + str(address[1]))
 
     old_tty = termios.tcgetattr(sys.stdin)
 
@@ -62,4 +69,5 @@ def main():
         termios.tcsetattr(stdin, termios.TCSADRAIN, old_tty)
 
 
-main()
+if __name__ == "__main__":
+    main()

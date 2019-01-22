@@ -5,6 +5,7 @@ import select
 import pty
 import os
 import io
+import sys
 
 HOST = '127.0.0.1'
 PORT = 9999
@@ -24,12 +25,11 @@ def run_bash_pty():
 
 def debug(*args, **kwargs):
     if DEBUG_MODE:
-        print(*args, **kwargs)
+        print(*args, file=sys.stderr, **kwargs)
 
 
 sock = socket.socket()
 sock.connect((HOST, PORT))
-sock.send("Connected\n\r".encode('utf8'))
 
 bash_fd = run_bash_pty()
 bash_stdout = io.open(bash_fd, 'rb', buffering=0)
